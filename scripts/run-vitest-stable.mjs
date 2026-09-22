@@ -73,23 +73,24 @@ const generalChatGroupName = "general-chat";
 const generalServerNativeRunnerGroupName = "general-server-native-runner";
 const chatSuite = "server/src/__tests__/chat-channels.integration.test.ts";
 // This suite rebuilds the Runner release binaries with cargo in beforeAll.
-// Inside the PR workflow's plain server shards, which carry no Rust cache,
-// that build was a ~4m30s cold compile of every third-party crate on each run
-// (277s of a 291s shard vitest step, actions run 35246999382, 2026-09-17).
+// Inside a plain server shard, which carries no Rust cache, that build is a
+// ~4m30s cold compile of every third-party crate on each run (277s of a 291s
+// shard vitest step, actions run 35246999382, 2026-09-17).
 const nativeRunnerSuite =
   "server/src/services/native-runtime/native-codex-runner.integration.test.ts";
-// In the PR workflow (pr.yml, the caller of pr-trusted.yml — reusable
-// workflows inherit the caller's GITHUB_WORKFLOW), the last Verify Paperclip
-// Runner vitest shard runs the native-runner group instead, because those
-// lanes restore the shared release-runner-v1 Rust cache (see
-// packages/paperclip-runner/scripts/run-pr-vitest-lane.mjs). Every other
-// caller — local runs, release-verify.yml under the Release and Cloud
-// readiness workflows — keeps the suite in the server shards, so a renamed or
-// unknown workflow degrades to today's slower-but-covered behavior rather
-// than dropping the suite.
-const prWorkflowName = "PR";
-const nativeRunnerSuiteRunsInRustCachedLane = process.env.GITHUB_WORKFLOW === prWorkflowName;
-const withoutChatExcludedSuites = nativeRunnerSuiteRunsInRustCachedLane
+// A caller that runs the general-server-native-runner group as its own
+// Rust-cached lane declares that by setting NATIVE_RUNNER_SUITE_LANE to
+// "dedicated" — the PR workflow's General tests job does (its native-runner
+// matrix entry restores the shared release-runner-v1 cache; see
+// .github/workflows/pr-trusted.yml). Only under that declaration do the
+// without-chat shards leave the suite out. Every other caller — local runs,
+// release-verify.yml under the Release and Cloud readiness workflows — keeps
+// the suite in the server shards, so a caller that provides no dedicated
+// lane degrades to the slower-but-covered behavior rather than dropping the
+// suite.
+const nativeRunnerSuiteRunsInDedicatedLane =
+  process.env.NATIVE_RUNNER_SUITE_LANE === "dedicated";
+const withoutChatExcludedSuites = nativeRunnerSuiteRunsInDedicatedLane
   ? [chatSuite, nativeRunnerSuite]
   : [chatSuite];
 const generalWorkspacesAGroupName = "general-workspaces-a";
@@ -389,9 +390,9 @@ function runGeneralGroup(routeTests, groupName, shardIndex = null, shardCount = 
     return;
   }
   if (groupName === generalServerGroupName || groupName === generalServerWithoutChatGroupName) {
-    // In the PR workflow the without-chat group also leaves the native-runner
-    // suite to the Rust-cached vitest lane; the full general-server group
-    // (local runs) keeps both.
+    // Under a dedicated native-runner lane (NATIVE_RUNNER_SUITE_LANE above)
+    // the without-chat group also leaves that suite out; the full
+    // general-server group (local runs) keeps both.
     const withoutChat = groupName === generalServerWithoutChatGroupName;
     const files = withoutChat
       ? generalServerTestFiles.filter((file) => !withoutChatExcludedSuites.includes(file))
