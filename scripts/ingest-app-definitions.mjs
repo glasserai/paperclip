@@ -942,6 +942,7 @@ const categoryBySlug = {
   wix: "content",
   xero: "commerce",
   youcom: "ai",
+  glasser: "data",
   zapier: "productivity",
 };
 const oauthMethodFor = (
@@ -1033,6 +1034,11 @@ const apiKeySpec = {
     name: "Authorization",
     prefix: "Bearer ",
     placeholder: "Paste your You.com API key",
+  },
+  glasser: {
+    name: "Authorization",
+    prefix: "Bearer ",
+    placeholder: "Paste your Glasser Key (gl_…)",
   },
 };
 const apiKeyMethodFor = (
