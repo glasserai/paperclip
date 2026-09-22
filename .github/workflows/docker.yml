@@ -373,12 +373,7 @@ jobs:
       - name: Resolve standard image digest
         id: standard
         if: github.repository == 'paperclipai/paperclip' && github.repository_id == '1170821064' && github.event_name == 'push' && github.ref == 'refs/heads/master'
-        env:
-          IMAGE: ghcr.io/paperclipai/paperclip
-        run: |
-          set -euo pipefail
-          docker buildx imagetools inspect --raw "$IMAGE:sha-$GITHUB_SHA" > /tmp/standard-image-index.json
-          node scripts/standard-image-contract.mjs /tmp/standard-image-index.json
+        run: node scripts/standard-image-contract.mjs --resolve "$GITHUB_SHA"
       - name: Verify the immutable standard image
         if: steps.standard.outputs.digest != ''
         env:
