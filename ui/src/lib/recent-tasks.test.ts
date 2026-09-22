@@ -53,6 +53,14 @@ describe("recent task persistence", () => {
     expect(entries.filter((entry) => entry.id === "4")).toHaveLength(1);
   });
 
+  it("refreshes conversation readiness when review or delivery changes without a task edit", () => {
+    const task = { ...issue("1"), status: "in_review" as const, externalConversationState: "waiting" as const };
+    recordRecentTask(task, "user-1");
+    const storageKey = getRecentTasksStorageKey("company-1", "user-1");
+    updateRecentTaskSnapshots(storageKey, "company-1", [{ ...task, externalConversationState: "active" }]);
+    expect(readRecentTasks(storageKey, "company-1")[0]?.externalConversationState).toBe("active");
+  });
+
   it("publishes same-tab updates", () => {
     const listener = vi.fn();
     window.addEventListener(RECENT_TASKS_UPDATED_EVENT, listener);
