@@ -593,8 +593,15 @@ describe("AppDefinition catalog", () => {
         (candidate) => candidate.key,
       ),
     ).toEqual(["mcp-oauth", "mcp-api-key"]);
-    expect(method("glasser")?.defaults?.serverUrl).toBe("https://api.glasser.ai/mcp");
+    expect(method("glasser")?.defaults).toEqual({
+      serverUrl: "https://api.glasser.ai/mcp",
+      scopesHint: ["mcp"],
+    });
     expect(method("glasser")?.ownershipModes).toEqual(["dcr"]);
+    expect(method("glasser", "mcp-api-key")?.consoleLinks).toEqual({
+      keys: "https://app.glasser.ai/keys",
+      docs: "https://glasser.ai/docs/mcp-server",
+    });
     expect(method("glasser", "mcp-api-key")).toMatchObject({
       auth: "api_key",
       keyPlacement: {
